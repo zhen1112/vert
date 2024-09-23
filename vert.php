@@ -160,16 +160,70 @@ foreach ($query as $index => $queries) {
         // Create wallet if it's a new account and clear task
         if ($permisi === 'y') {
             $url = 'https://api.thevertus.app/users/create-wallet';
-            $data = json_encode([]);
-            $response = makeCurlRequest($queries, $url, 'POST', $data);
-            echo "Response: " . $response . "\n";
+
+            // Create a cURL handle
+            $ch = curl_init($url);
+
+            // Prepare the headers
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$queries.'',
+                'Accept: application/json, text/plain, */*',
+                'User-Agent: Mozilla/5.0 (Linux; Android 9; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Mobile Safari/537.36',
+                'Origin: https://thevertus.app',
+                'X-Requested-With: org.telegram.messenger',
+            ];
+
+            // Set cURL options
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([])); // Empty JSON body
+
+            // Execute the request
+            $response = curl_exec($ch);
+
+            // Check for errors
+            if (curl_errno($ch)) {
+                echo 'Error: ' . curl_error($ch);
+            } else {
+                echo 'Response: ' . $response  . "\n";
+            }
+
+            // Close the cURL handle
+            curl_close($ch);
 
         // Process missions
         foreach ($missionIds as $missionId) {
+            // Buat data JSON untuk permintaan
             $data = json_encode(['missionId' => $missionId]);
-            $response = makeCurlRequest($queries, 'https://api.thevertus.app/missions/complete', 'POST', $data);
-            echo "Response for missionId $missionId: $response\n";
+        
+            // Inisialisasi cURL
+            $ch = curl_init('https://api.thevertus.app/missions/complete');
+        
+            // Set opsi cURL
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$queries.''
+            ]);
+        
+            // Eksekusi cURL
+            $response = curl_exec($ch);
+        
+            // Cek untuk kesalahan
+            if (curl_errno($ch)) {
+                echo 'Curl error: ' . curl_error($ch) . "\n";
+            } else {
+                echo "Response for missionId $missionId: $response\n";
+            }
+        
+            // Tutup cURL
+            curl_close($ch);
         }
+        
 
         }
         // Handle farm and population upgrades
